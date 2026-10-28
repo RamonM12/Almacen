@@ -10,5 +10,5 @@ public interface SucursalRepository extends JpaRepository<Sucursal, Long> {
     boolean existsByNombreIgnoreCase(String nombre);
 
     //SELECT COUNT(*) FROM SUCURSALES WHERE LOWER(NOMBRE) = LOWER(:NOMBRE) AND ID_SUCURSAL <>:ID;
-    boolean existByNombreIgnoreCaseAndIdNot(String nombre, Long id);
+    boolean existsByNombreIgnoreCaseAndIdNot(String nombre, Long id);
 }
