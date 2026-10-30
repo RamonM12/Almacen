@@ -1,6 +1,7 @@
-package com.ramon.almacen.services.Sucursal;
+package com.ramon.almacen.services.sucursal;
 
 import com.ramon.almacen.entities.Sucursal;
+import com.ramon.almacen.exceptions.ConflictException;
 import com.ramon.almacen.exceptions.RecursoNoEncontradoException;
 import com.ramon.almacen.mappers.SucursalMapper;
 import com.ramon.almacen.repositories.SucursalRepository;
@@ -85,11 +86,11 @@ public class SucursalServiceImpl implements SucursalService{
     }
 
     private Sucursal obtenerSucursalOException(Long id){
-        log.info("Buscando sucursal con id: " + id);
+        log.info("Buscando sucursal con id: {}", id);
 
         return sucursalRepository.findById(id).orElseThrow(
                 () -> new RecursoNoEncontradoException(
-                        "Sucursal no encontrada con id: {}" + id
+                        "Sucursal no encontrada con id: " + id
                 )
         );
     }
@@ -98,21 +99,17 @@ public class SucursalServiceImpl implements SucursalService{
         log.info("Validando nombre unico...");
 
         if (sucursalRepository.existsByNombreIgnoreCase(request.nombre().trim()))
-            throw new RuntimeException(
-                    "Ya existe una sucursal con el nombre de: " + request.nombre()
-            );
+            throw new ConflictException("Ya existe una sucursal con el nombre de: " + request.nombre());
     }
 
     private void validarCambiosUnicos(SucursalRequest request, Long id){
         log.info("Validando cambio en nombre unico...");
 
         if (sucursalRepository.existsByNombreIgnoreCaseAndIdNot(request.nombre().trim(), id))
-            throw new RuntimeException(
+            throw new ConflictException(
                     "Ya existe una sucursal con el nombre de: " + request.nombre()
             );
     }
-
-
 }
 
 

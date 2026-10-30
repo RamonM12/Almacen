@@ -1,4 +1,4 @@
-package com.ramon.almacen.services.Sucursal;
+package com.ramon.almacen.services.sucursal;
 
 import com.ramon.almacen.services.sucursales.SucursalRequest;
 import com.ramon.almacen.services.sucursales.SucursalResponse;

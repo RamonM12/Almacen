@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 public enum Categoria {
     ALIMENTO("Alimento"),
     HIGIENE("Higiene"),
-    JUGUETE("Jueguete"),
+    JUGUETE("Juguete"),
     ELECTRONICA("Electronica"),
     ROPA("Ropa"),
     ACCESORIO("Accesorio"),
@@ -18,15 +18,20 @@ public enum Categoria {
     private final String descripcion;
 
     public static Categoria obtenerCategoriaPorDescripcion(String descripcion){
-        StringCustomUtils.validarNoVacio(descripcion, "La descripcion es requerida");
+        if (descripcion == null || descripcion.trim().isEmpty()) {
+            return null;
+        }
 
         String descriocionNormalizada = StringCustomUtils.normalizarTexto(descripcion);
 
         for(Categoria categoria : values()){
-            if(StringCustomUtils.normalizarTexto(categoria.descripcion).equalsIgnoreCase(descriocionNormalizada))
+            // Comparamos de forma segura normalizando también la descripción del enum
+            if(StringCustomUtils.normalizarTexto(categoria.descripcion).equalsIgnoreCase(descriocionNormalizada)) {
                 return categoria;
+            }
         }
 
-        throw new RuntimeException("No existe una categoria con la descripcion: " + descripcion);
+        // En lugar de tronar la app con una excepción en un filtro, retornamos null
+        return null;
     }
 }
