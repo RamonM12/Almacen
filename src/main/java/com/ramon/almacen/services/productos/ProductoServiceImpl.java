@@ -4,94 +4,94 @@ import com.ramon.almacen.dto.productos.ProductoRequest;
 import com.ramon.almacen.dto.productos.ProductoResponse;
 import com.ramon.almacen.entities.Producto;
 import com.ramon.almacen.enums.Categoria;
+import com.ramon.almacen.exceptions.DatoInvalidoException;
 import com.ramon.almacen.exceptions.RecursoNoEncontradoException;
 import com.ramon.almacen.mappers.ProductoMapper;
 import com.ramon.almacen.repositories.ProductoRepository;
-import org.springframework.transaction.annotation.Transactional;
+import com.ramon.almacen.specificacions.ProductSpecs;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
-@Slf4j
-
 public class ProductoServiceImpl implements ProductoService {
-    private final ProductoRepository productoRepository;
 
+    private final ProductoRepository productoRepository;
     private final ProductoMapper productoMapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductoResponse> listar(
-            String nombre, String categoria,
-            BigDecimal precioMin, BigDecimal precioMax) {
-        log.info("Listando todos los productos");
+    public List<ProductoResponse> listar(String nombre, String categoria,
+                                         BigDecimal precioMin, BigDecimal precioMax) {
 
-        return productoRepository.findAll().stream()
-               // .map(Producto producto -> productoMapper.entidadAResponse(producto)).toList();
-                .map(productoMapper::entidadAResponse).toList();
+        Specification<Producto> spec = Specification
+                .where(ProductSpecs.conNombre(nombre))
+                .and(ProductSpecs.conCategoria(categoria))
+                .and(ProductSpecs.conPrecioMin(precioMin))
+                .and(ProductSpecs.conPrecioMax(precioMax));
+
+        return productoRepository.findAll(spec)
+                .stream()
+                .map(productoMapper::entidadAResponse)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public ProductoResponse obtenerPorId(Long id) {
-        return null;
+        return productoMapper.entidadAResponse(buscar(id));
     }
 
     @Override
+    @Transactional
     public ProductoResponse registrar(ProductoRequest request) {
-        log.info("Registrar nuevo producto...");
-        Producto producto = productoMapper.requestAEntidad(
-                request,
-                Categoria.obtenerCategoriaPorDescripcion(request.categoria().trim())
-        );
-        productoRepository.saveAndFlush(producto);
-
-        log.info("Nuevo producto {} registrado",producto.getNombre());
-
-        return productoMapper.entidadAResponse(producto);
+        Producto producto = productoMapper.requestAEntidad(request, convertirCategoria(request.categoria()));
+        return productoMapper.entidadAResponse(productoRepository.save(producto));
     }
 
     @Override
+    @Transactional
     public ProductoResponse actualizar(ProductoRequest request, Long id) {
-        Producto producto = obtenerProductoOException(id);
-
-        log.info("Actualizando producto con id: {}", id);
-
-        producto.actualizar(
-                request.nombre(),
-                null,
-                request.precio(),
-                request.cantidad()
-        );
-        productoRepository.saveAndFlush(producto);
-
-        log.info("Producto con id {} actualizado", id);
-
-        return productoMapper.entidadAResponse(producto);
+        Producto producto = buscar(id);
+        Producto.validarDatos(request.nombre(), convertirCategoria(request.categoria()),
+                request.precio(), request.cantidad());
+        producto.actualizar(request.nombre(), convertirCategoria(request.categoria()),
+                request.precio(), request.cantidad());
+        return productoMapper.entidadAResponse(productoRepository.save(producto));
     }
 
     @Override
+    @Transactional
     public void eliminar(Long id) {
-    Producto producto = obtenerProductoOException(id);
-    log.info("Eliminando producto con id: {}", id);
-
-    productoRepository.flush();
-
-    log.info("Producto con id {} eliminaod", id);
+        productoRepository.delete(buscar(id));
     }
 
-    private Producto obtenerProductoOException(Long id){
-        log.info("Buscando producto con id: {}", id);
+    private Producto buscar(Long id) {
+        return productoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Producto no encontrado con id: " + id));
+    }
 
-        return productoRepository.findById(id).orElseThrow(
-                ()-> new RecursoNoEncontradoException(
-                        "Producto no encontrado con id: " + id)
-        );
+    private Categoria convertirCategoria(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return null;
+        }
+
+        String limpio = valor.trim();
+
+        try {
+            return Categoria.valueOf(limpio.toUpperCase());
+        } catch (IllegalArgumentException ignored) {}
+
+        try {
+            return Categoria.obtenerCategoriaPorDescripcion(limpio);
+        } catch (Exception e) {
+            throw new DatoInvalidoException("Categoría no válida: " + valor);
+        }
     }
 }

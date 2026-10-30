@@ -1,10 +1,13 @@
 package com.ramon.almacen.controllers;
 
-import com.ramon.almacen.services.Sucursal.SucursalService;
+import com.ramon.almacen.docs.ProblemaDoc;
+import com.ramon.almacen.services.sucursal.SucursalService;
 import com.ramon.almacen.services.sucursales.SucursalRequest;
 import com.ramon.almacen.services.sucursales.SucursalResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,6 +24,14 @@ import java.util.List;
 @RequestMapping("/api/sucursales")
 @RequiredArgsConstructor
 @Tag(name = "API Sucursales", description = "Gestion de Sucursales")
+
+//Errores globales
+@ApiResponse(responseCode = "400", description = "Datos o parámetros inválidos",
+        content = @Content(mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemaDoc.class)))
+@ApiResponse(responseCode = "500", description = "Error interno del servidor",
+        content = @Content(mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemaDoc.class)))
 public class SucursalController {
     private final SucursalService sucursalService;
 

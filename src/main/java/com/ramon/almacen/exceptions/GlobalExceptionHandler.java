@@ -17,33 +17,34 @@ import java.util.List;
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     /*------------------------*/
-    //404
+    // 404
     @ExceptionHandler(RecursoNoEncontradoException.class)
-    public ProblemDetail handleNoEnctrontrado(RecursoNoEncontradoException e){
+    public ProblemDetail handleNoEncontrado(RecursoNoEncontradoException e){
         log.warn("No encontrado: {}", e.getMessage());
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,e.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
-    //400
-    @ExceptionHandler(RecursoNoEncontradoException.class)
-    public ProblemDetail handleNoInvalido(RecursoNoEncontradoException e){
-        log.warn("No encontrado: {}", e.getMessage());
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,e.getMessage());
+    // 400
+    @ExceptionHandler(DatoInvalidoException.class) // O IllegalArgumentException.class
+    public ProblemDetail handleDatoInvalido(DatoInvalidoException e){
+        log.warn("Dato inválido: {}", e.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
-    //409 regla de negocio violada(duplicado, etc)
-    @ExceptionHandler(RecursoNoEncontradoException.class)
-    public ProblemDetail handleConflicto(RecursoNoEncontradoException e){
-        log.warn("No encontrado: {}", e.getMessage());
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,e.getMessage());
+    // 409 regla de negocio violada (duplicado, etc)
+    @ExceptionHandler(ConflictException.class)
+    public ProblemDetail handleConflicto(ConflictException e){
+        log.warn("Conflicto de negocio: {}", e.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
-    //409 la base de datos rechazo el dato
-    @ExceptionHandler(RecursoNoEncontradoException.class)
-    public ProblemDetail handleIntegridad(RecursoNoEncontradoException e){
-        log.warn("No encontrado: {}", e.getMessage());
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,e.getMessage());
+    // 409 la base de datos rechazo el dato (ej. DataIntegrityViolationException)
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ProblemDetail handleIntegridad(org.springframework.dao.DataIntegrityViolationException e){
+        log.warn("Error de integridad en BD: {}", e.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "El registro viola restricciones de la base de datos.");
     }
+
 
     /*-------------------------- Validaciones -----------------------------*/
 
